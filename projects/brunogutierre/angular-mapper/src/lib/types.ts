@@ -60,7 +60,7 @@ export interface MappingContext {
   readonly path: string;
   /** Direction of the conversion in progress. */
   readonly direction: MappingDirection;
-  /** Configuration in effect for the root mapping. */
+  /** Global mapper configuration, before per-mapping overrides. */
   readonly config: MapperConfig;
 }
 
