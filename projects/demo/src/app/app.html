@@ -1,0 +1,89 @@
+<header>
+  <h1>AngularMapper demo</h1>
+  <p>
+    The fake backend speaks <code>snake_case</code> with codes and timestamps; the UI works with
+    camelCase models, <code>Date</code> objects and readable enums.
+  </p>
+</header>
+
+<main>
+  <section aria-labelledby="users-title">
+    <h2 id="users-title">Users <small>(httpResource + Mapper)</small></h2>
+    @if (api.users.isLoading()) {
+      <p>Loading…</p>
+    }
+    <ul class="users">
+      @for (user of api.users.value(); track user.id) {
+        <li>
+          <button
+            type="button"
+            (click)="select(user.id)"
+            [attr.aria-pressed]="selected()?.id === user.id"
+          >
+            <strong>{{ user.name }}</strong>
+            <span class="status status-{{ user.status }}">{{ user.status }}</span>
+            <span
+              >{{ user.address.city }} · born
+              {{ user.birthDate | date: 'mediumDate' : 'UTC' }}</span
+            >
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section aria-labelledby="editor-title">
+    <h2 id="editor-title">Editor <small>(mapToFront + mapperInterceptor)</small></h2>
+    @if (selected(); as user) {
+      <dl>
+        <dt>Email</dt>
+        <dd>{{ user.email }}</dd>
+        <dt>Member since</dt>
+        <dd>{{ user.createdAt | date: 'medium' : 'UTC' }}</dd>
+        <dt>Last login IP</dt>
+        <dd>{{ user.lastLoginIp ?? '—' }}</dd>
+        <dt>Address</dt>
+        <dd>{{ user.address.street }}, {{ user.address.zipCode }} {{ user.address.city }}</dd>
+      </dl>
+      <form (submit)="$event.preventDefault(); save(user)">
+        <label>
+          Name
+          <input [value]="draft().name" (input)="edit({ name: $any($event.target).value })" />
+        </label>
+        <label>
+          Status
+          <select [value]="draft().status" (change)="edit({ status: $any($event.target).value })">
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </label>
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save (PATCH)' }}
+        </button>
+      </form>
+    } @else {
+      <p>Select a user to load it through the <code>mapToFront</code> operator.</p>
+    }
+    @if (error(); as message) {
+      <p role="alert" class="error">{{ message }}</p>
+    }
+  </section>
+
+  <section aria-labelledby="traffic-title" class="traffic">
+    <h2 id="traffic-title">On the wire <small>(what the backend sees)</small></h2>
+    @for (entry of traffic.entries(); track $index) {
+      <article>
+        <h3>{{ entry.method }} {{ entry.url }}</h3>
+        @if (entry.requestBody !== null) {
+          <p>Request DTO</p>
+          <pre>{{ entry.requestBody | json }}</pre>
+        }
+        <p>Response DTO</p>
+        <pre>{{ entry.responseBody | json }}</pre>
+      </article>
+    } @empty {
+      <p>No requests yet.</p>
+    }
+  </section>
+</main>
