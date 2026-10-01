@@ -4,7 +4,12 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "@brunogutierre/angular-mapper": ["./dist/brunogutierre/angular-mapper"]
+      "@brunogutierre/angular-mapper": [
+        "./projects/brunogutierre/angular-mapper/src/public-api.ts"
+      ],
+      "@brunogutierre/angular-mapper/*": [
+        "./projects/brunogutierre/angular-mapper/*/src/public-api.ts"
+      ]
     },
     "strict": true,
     "noUncheckedIndexedAccess": true,
