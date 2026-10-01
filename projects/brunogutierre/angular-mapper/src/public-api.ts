@@ -4,6 +4,9 @@
 
 export { defineMapping, ignore } from './lib/define-mapping';
 export { MapperError } from './lib/errors';
+export { MAPPER_CONFIG, Mapper } from './lib/mapper';
+export { provideMapper, withNamingConvention, withStrictMode } from './lib/provide-mapper';
+export type { MapperFeature, MapperFeatureKind } from './lib/provide-mapper';
 export type { MapperErrorCode, MapperErrorDetails } from './lib/errors';
 export type {
   BackOf,
