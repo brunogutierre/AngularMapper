@@ -10,7 +10,7 @@
     "@brunogutierre/angular-mapper": {
       "projectType": "library",
       "root": "projects/brunogutierre/angular-mapper",
-      "sourceRoot": "projects/brunogutierre/angular-mapper/src",
+      "sourceRoot": "projects/brunogutierre/angular-mapper",
       "prefix": "lib",
       "architect": {
         "build": {
