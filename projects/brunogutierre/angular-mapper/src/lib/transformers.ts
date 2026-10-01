@@ -191,8 +191,9 @@ export function custom<B, F>(transformer: Transformer<B, F>): Transformer<B, F> 
 }
 
 /**
- * Applies another mapping to a nested object, using the same direction, configuration and
- * error paths as the parent.
+ * Applies another mapping to a nested object, in the same direction and with error paths
+ * relative to the parent. The nested mapping uses its own options over the global
+ * configuration; the parent's per-mapping options are not inherited.
  *
  * @usageNotes
  * ```ts

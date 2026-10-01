@@ -58,7 +58,7 @@ projects/
 │   │   ├── engine.ts                  pure mapObject/mapList functions (no Angular)
 │   │   ├── naming.ts                  built-in naming conventions (memoized)
 │   │   ├── transformers.ts            isoDate, enumMap, nested, listOf, ...
-│   │   ├── mapper.ts                  Mapper singleton + MAPPER_CONFIG token
+│   │   ├── mapper.ts                  Mapper singleton + internal MAPPER_CONFIG token
 │   │   └── provide-mapper.ts          provideMapper(withNamingConvention, withStrictMode)
 │   ├── rxjs/                          secondary entry point: mapToFront, mapToBack, ...
 │   └── http/                          secondary entry point: mapperInterceptor, withMapping
@@ -91,6 +91,13 @@ The library has three layers:
   ambiguous combinations; one policy plus "strict wins" is easy to explain.
 - **`null` passes through and `undefined` is omitted.** Transformers never deal with nullish
   values, and partial `PATCH` payloads work with no special code.
+- **Both sides of a field must agree on `null`.** The mapper copies `null` as-is, so a nullable
+  backend field cannot feed a non-nullable frontend field. This is checked at compile time.
+- **`isoDate({ format: 'date' })` uses local time.** A calendar date like `2026-10-01` is read as
+  local midnight and sent from local date parts. A UTC-based conversion would shift the day for
+  users west or east of UTC.
+- **Internals stay internal.** `MAPPER_CONFIG` is not exported and feature internals use
+  Angular's `ɵ` prefix, so `provideMapper()` stays the only way to configure the mapper.
 - **A single `MapperError` with a `code` and `path`.** A hierarchy of error classes would add
   imports and add no information.
 - **The `provideMapper(withX())` style, without `MapperModule`.** It mirrors `provideRouter` and
@@ -116,8 +123,12 @@ The library has three layers:
   write the response type yourself, or use the RxJS operators.
 - Naming conventions are applied at runtime. Fields left to the convention are not
   type-checked, so declare important fields explicitly.
+- Every spec entry is optional, so `toFront` returns `F` even when a required field was never
+  declared. With the `keep` policy, such a field is simply missing at runtime. Strict mode
+  catches the backend side of this.
 - Converting a key to camelCase and back is not always lossless. For example, `userID` becomes
-  `user_id`, which reads back as `userId`.
+  `user_id`, which reads back as `userId`, and `user_id_2` becomes `userId2`, which is sent back
+  as `user_id2`.
 
 ## Getting started
 
