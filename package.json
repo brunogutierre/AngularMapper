@@ -13,7 +13,9 @@
     "lint": "ng lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:types": "tsc -p projects/brunogutierre/angular-mapper/tsconfig.type-tests.json"
+    "test:types": "tsc -p projects/brunogutierre/angular-mapper/tsconfig.type-tests.json",
+    "test:coverage": "ng test @brunogutierre/angular-mapper --watch=false --coverage",
+    "check:package": "npm run build && publint dist/brunogutierre/angular-mapper && cd dist/brunogutierre/angular-mapper && attw --pack . --profile esm-only && npm pack --dry-run"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -31,12 +33,15 @@
     "@angular/build": "^22.2.1",
     "@angular/cli": "^22.0.6",
     "@angular/compiler-cli": "^22.0.0",
+    "@arethetypeswrong/cli": "^0.18.5",
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^5.0.3",
     "angular-eslint": "22.5.0",
     "eslint": "^10.9.1",
     "jsdom": "^30.0.0",
     "ng-packagr": "^22.2.0",
     "prettier": "^3.8.1",
+    "publint": "^0.3.24",
     "typescript": "~6.0.2",
     "typescript-eslint": "8.69.0",
     "vitest": "^5.0.0"
