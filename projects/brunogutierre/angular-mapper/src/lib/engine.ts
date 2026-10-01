@@ -1,5 +1,6 @@
 import { getCompiled } from './compiled-mapping';
 import { MapperError } from './errors';
+import { resolveNamingConvention } from './naming';
 import type {
   MapperConfig,
   Mapping,
@@ -98,14 +99,9 @@ export function resolveConfig(
 ): MapperConfig {
   const { undeclared, convention } = mapping.options;
   if (undeclared === undefined && convention === undefined) return config;
-  if (typeof convention === 'string') {
-    throw new MapperError('MAPPER_INVALID_MAPPING', `Unknown naming convention "${convention}".`, {
-      mapping: mapping.name,
-    });
-  }
   return {
     undeclared: undeclared ?? config.undeclared,
-    convention: convention ?? config.convention,
+    convention: convention === undefined ? config.convention : resolveNamingConvention(convention),
   };
 }
 

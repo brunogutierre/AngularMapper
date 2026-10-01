@@ -1,5 +1,6 @@
 import { registerCompiled, type CompiledField } from './compiled-mapping';
 import { MapperError } from './errors';
+import { resolveNamingConvention } from './naming';
 import type { IgnoredField, Mapping, MappingOptions, MappingSpec, Transformer } from './types';
 
 const IGNORED: IgnoredField = Object.freeze({ ignore: true });
@@ -51,6 +52,8 @@ export function defineMapping<B extends object, F extends object>(
     throw new MapperError('MAPPER_INVALID_MAPPING', 'A mapping needs a non-empty name.');
   }
 
+  validateOptions(name, options);
+
   const fields: CompiledField[] = [];
   const frontKeys = new Set<string>();
   const backKeys = new Set<string>();
@@ -82,6 +85,28 @@ export function defineMapping<B extends object, F extends object>(
   const mapping: Mapping<B, F> = Object.freeze({ name, options: Object.freeze({ ...options }) });
   registerCompiled(mapping, Object.freeze({ fields: Object.freeze(fields), frontKeys, backKeys }));
   return mapping;
+}
+
+const POLICIES: readonly unknown[] = ['keep', 'convert', 'drop', 'error'];
+
+function validateOptions(mapping: string, options: MappingOptions): void {
+  if (options.undeclared !== undefined && !POLICIES.includes(options.undeclared)) {
+    throw new MapperError(
+      'MAPPER_INVALID_MAPPING',
+      `"undeclared" must be one of ${POLICIES.join(', ')}.`,
+      { mapping },
+    );
+  }
+  if (options.convention !== undefined) {
+    try {
+      resolveNamingConvention(options.convention);
+    } catch (error) {
+      throw new MapperError('MAPPER_INVALID_MAPPING', (error as Error).message, {
+        mapping,
+        cause: error,
+      });
+    }
+  }
 }
 
 function compileField(mapping: string, front: string, entry: unknown): CompiledField {
