@@ -22,6 +22,7 @@ module.exports = defineConfig([
       '@typescript-eslint/explicit-module-boundary-types': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/consistent-type-exports': 'error',
+      '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
     },
   },
   {
