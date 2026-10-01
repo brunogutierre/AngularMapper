@@ -3,10 +3,13 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "start": "ng serve demo",
     "build": "ng build @brunogutierre/angular-mapper",
     "watch": "ng build @brunogutierre/angular-mapper --watch --configuration development",
+    "build:demo": "ng build demo",
     "test": "ng test @brunogutierre/angular-mapper --watch=false",
     "test:watch": "ng test @brunogutierre/angular-mapper",
+    "test:demo": "ng test demo --watch=false",
     "lint": "ng lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

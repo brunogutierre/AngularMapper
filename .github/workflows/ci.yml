@@ -39,5 +39,11 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Demo tests
+        run: npm run test:demo
+
       - name: Build library
         run: npm run build
+
+      - name: Build demo
+        run: npm run build:demo
