@@ -9,7 +9,8 @@
     "test:watch": "ng test @brunogutierre/angular-mapper",
     "lint": "ng lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:types": "tsc -p projects/brunogutierre/angular-mapper/tsconfig.type-tests.json"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
