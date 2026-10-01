@@ -24,8 +24,8 @@ export type MapperFeatureKind = 'NamingConvention' | 'StrictMode';
  */
 export interface MapperFeature<K extends MapperFeatureKind = MapperFeatureKind> {
   readonly kind: K;
-  /** Applies the feature to the configuration being built. */
-  readonly configure: (config: MapperConfig) => MapperConfig;
+  /** @internal Applies the feature to the configuration being built. Not part of the public API. */
+  readonly ɵconfigure: (config: MapperConfig) => MapperConfig;
 }
 
 /**
@@ -42,10 +42,15 @@ export interface MapperFeature<K extends MapperFeatureKind = MapperFeatureKind> 
 export function withNamingConvention(
   convention: NamingConventionName | NamingConvention,
 ): MapperFeature<'NamingConvention'> {
-  const resolved = resolveNamingConvention(convention);
+  let resolved: NamingConvention;
+  try {
+    resolved = resolveNamingConvention(convention);
+  } catch (error) {
+    throw new MapperError('MAPPER_INVALID_CONFIG', (error as Error).message, { cause: error });
+  }
   return {
     kind: 'NamingConvention',
-    configure: (config) => ({
+    ɵconfigure: (config) => ({
       convention: resolved,
       undeclared: config.undeclared === 'error' ? 'error' : 'convert',
     }),
@@ -60,7 +65,7 @@ export function withNamingConvention(
  * @publicApi
  */
 export function withStrictMode(): MapperFeature<'StrictMode'> {
-  return { kind: 'StrictMode', configure: (config) => ({ ...config, undeclared: 'error' }) };
+  return { kind: 'StrictMode', ɵconfigure: (config) => ({ ...config, undeclared: 'error' }) };
 }
 
 /**
@@ -75,8 +80,9 @@ export function withStrictMode(): MapperFeature<'StrictMode'> {
  * });
  * ```
  *
- * @throws {MapperError} `MAPPER_ALREADY_PROVIDED` when a feature is passed twice or the
- * providers are registered below the root injector (e.g. in a lazy route).
+ * @throws {MapperError} `MAPPER_INVALID_CONFIG` when a feature is passed twice, and
+ * `MAPPER_ALREADY_PROVIDED` when the providers are registered below the root injector (e.g. in a
+ * lazy route) or more than once.
  *
  * @publicApi
  */
@@ -103,7 +109,7 @@ function buildConfig(features: readonly MapperFeature[]): MapperConfig {
   for (const feature of features) {
     if (kinds.has(feature.kind)) {
       throw new MapperError(
-        'MAPPER_ALREADY_PROVIDED',
+        'MAPPER_INVALID_CONFIG',
         `The ${feature.kind} feature was passed to provideMapper() more than once.`,
       );
     }
@@ -114,6 +120,6 @@ function buildConfig(features: readonly MapperFeature[]): MapperConfig {
     (a, b) => Number(a.kind === 'StrictMode') - Number(b.kind === 'StrictMode'),
   );
   return Object.freeze(
-    ordered.reduce((config, feature) => feature.configure(config), DEFAULT_MAPPER_CONFIG),
+    ordered.reduce((config, feature) => feature.ɵconfigure(config), DEFAULT_MAPPER_CONFIG),
   );
 }

@@ -7,7 +7,6 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { DEFAULT_MAPPER_CONFIG } from './config';
 import { defineMapping } from './define-mapping';
-import { MapperError } from './errors';
 import { MAPPER_CONFIG, Mapper } from './mapper';
 import { resolveNamingConvention } from './naming';
 import { provideMapper, withNamingConvention, withStrictMode } from './provide-mapper';
@@ -127,12 +126,19 @@ describe('Mapper', () => {
 
     it('rejects the same feature twice', () => {
       expect(() => provideMapper(withStrictMode(), withStrictMode())).toThrow(
-        'The StrictMode feature was passed to provideMapper() more than once.',
+        expect.objectContaining({
+          code: 'MAPPER_INVALID_CONFIG',
+          message: expect.stringContaining(
+            'The StrictMode feature was passed to provideMapper() more than once.',
+          ),
+        }),
       );
     });
 
     it('rejects an unknown naming convention eagerly', () => {
-      expect(() => withNamingConvention('snakecase' as 'snake_case')).toThrow(MapperError);
+      expect(() => withNamingConvention('snakecase' as 'snake_case')).toThrow(
+        expect.objectContaining({ code: 'MAPPER_INVALID_CONFIG' }),
+      );
     });
 
     it('works from the providers of a root NgModule', () => {

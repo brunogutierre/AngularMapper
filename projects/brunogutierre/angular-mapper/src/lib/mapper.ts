@@ -4,10 +4,8 @@ import { mapList, mapObject } from './engine';
 import type { MapperConfig, Mapping } from './types';
 
 /**
- * Global configuration read by {@link Mapper}. Set it with `provideMapper()`; without it the
- * mapper keeps undeclared fields unchanged and uses no naming convention.
- *
- * @publicApi
+ * Global configuration read by {@link Mapper}. Internal: applications configure it only through
+ * `provideMapper()`, which validates features and enforces root-only registration.
  */
 export const MAPPER_CONFIG = new InjectionToken<MapperConfig>('MAPPER_CONFIG', {
   providedIn: 'root',

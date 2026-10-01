@@ -2,6 +2,7 @@
  * Machine-readable codes carried by every {@link MapperError}.
  *
  * - `MAPPER_INVALID_MAPPING`: a mapping definition is inconsistent (detected by `defineMapping`).
+ * - `MAPPER_INVALID_CONFIG`: `provideMapper()` received invalid or duplicated features.
  * - `MAPPER_INVALID_INPUT`: the value handed to the mapper is not a plain object (or array, for
  *   list methods).
  * - `MAPPER_UNKNOWN_FIELD`: strict mode met a field that the mapping does not declare.
@@ -12,6 +13,7 @@
  */
 export type MapperErrorCode =
   | 'MAPPER_INVALID_MAPPING'
+  | 'MAPPER_INVALID_CONFIG'
   | 'MAPPER_INVALID_INPUT'
   | 'MAPPER_UNKNOWN_FIELD'
   | 'MAPPER_TRANSFORM_FAILED'

@@ -22,10 +22,7 @@
           >
             <strong>{{ user.name }}</strong>
             <span class="status status-{{ user.status }}">{{ user.status }}</span>
-            <span
-              >{{ user.address.city }} · born
-              {{ user.birthDate | date: 'mediumDate' }}</span
-            >
+            <span>{{ user.address.city }} · born {{ user.birthDate | date: 'mediumDate' }}</span>
           </button>
         </li>
       }
