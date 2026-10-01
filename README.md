@@ -1,6 +1,7 @@
 # AngularMapper
 
 [![CI](https://github.com/brunogutierre/AngularMapper/actions/workflows/ci.yml/badge.svg)](https://github.com/brunogutierre/AngularMapper/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@brunogutierre/angular-mapper.svg)](https://www.npmjs.com/package/@brunogutierre/angular-mapper)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Type-safe, bidirectional mapping between frontend models and backend DTOs for Angular.

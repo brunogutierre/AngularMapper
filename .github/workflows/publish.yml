@@ -1,0 +1,56 @@
+name: Publish
+
+# Publishes the library to npm when a GitHub Release is published.
+# Uses npm Trusted Publishing (OIDC): no NPM_TOKEN secret, and every version gets a signed
+# provenance statement linking it to this workflow run. Configure the trusted publisher on
+# npmjs.com (package settings) with this repository and workflow file name.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Verify and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check that the tag matches the package version
+        id: version
+        run: |
+          version=$(node -p "require('./projects/brunogutierre/angular-mapper/package.json').version")
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version v${version}." >&2
+            exit 1
+          fi
+          if npm view "@brunogutierre/angular-mapper@${version}" version >/dev/null 2>&1; then
+            echo "Version ${version} is already on npm; skipping publish."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          npm run lint
+          npm run test:types
+          npm run test:coverage
+          npm run check:package
+
+      - name: Publish with provenance
+        if: steps.version.outputs.skip != 'true'
+        working-directory: dist/brunogutierre/angular-mapper
+        run: npm publish --provenance --access public

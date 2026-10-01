@@ -4,7 +4,7 @@ All notable changes to `@brunogutierre/angular-mapper` are documented here. The 
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-01
 
 ### Added
 
@@ -21,3 +21,5 @@ All notable changes to `@brunogutierre/angular-mapper` are documented here. The 
 - `MapperError` with codes, mapping name, field path and cause.
 - Compile-time check that both sides of a field agree on `null`.
 - `isoDate({ format: 'date' })` reads and sends calendar dates in local time.
+
+[0.1.0]: https://github.com/brunogutierre/AngularMapper/releases/tag/v0.1.0
