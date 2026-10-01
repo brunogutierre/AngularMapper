@@ -1,0 +1,9 @@
+/* Type-level tests: compiled with `tsc --noEmit`, never executed. */
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["src/**/*.test-d.ts"]
+}
