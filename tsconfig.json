@@ -3,6 +3,11 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "paths": {
+      "@brunogutierre/angular-mapper": ["./dist/brunogutierre/angular-mapper"]
+    },
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
@@ -17,7 +22,16 @@
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
   },
-  "files": []
+  "files": [],
+  "references": [
+    {
+      "path": "./projects/brunogutierre/angular-mapper/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/brunogutierre/angular-mapper/tsconfig.spec.json"
+    }
+  ]
 }

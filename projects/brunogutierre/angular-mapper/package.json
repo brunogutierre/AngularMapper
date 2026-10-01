@@ -1,0 +1,35 @@
+{
+  "name": "@brunogutierre/angular-mapper",
+  "version": "0.1.0",
+  "description": "Type-safe, bidirectional mapping between frontend models and backend DTOs for Angular.",
+  "keywords": [
+    "angular",
+    "mapper",
+    "mapping",
+    "dto",
+    "serialization",
+    "typescript",
+    "rxjs",
+    "http-interceptor"
+  ],
+  "license": "MIT",
+  "author": "Bruno Gutierre",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brunogutierre/AngularMapper.git",
+    "directory": "projects/brunogutierre/angular-mapper"
+  },
+  "homepage": "https://github.com/brunogutierre/AngularMapper#readme",
+  "bugs": {
+    "url": "https://github.com/brunogutierre/AngularMapper/issues"
+  },
+  "peerDependencies": {
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "rxjs": "^7.4.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}
