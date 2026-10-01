@@ -1,5 +1,12 @@
 import { MapperError } from './errors';
-import type { Mapping, MappingDirection, Transformer } from './types';
+import type {
+  MapperConfig,
+  Mapping,
+  MappingDirection,
+  NamingConvention,
+  Transformer,
+  UndeclaredFieldPolicy,
+} from './types';
 
 /** One declared field, normalized from the user-facing spec. */
 export interface CompiledField {
@@ -16,6 +23,14 @@ export interface CompiledMapping {
   readonly frontKeys: ReadonlySet<string>;
   /** Backend keys consumed by declared fields. */
   readonly backKeys: ReadonlySet<string>;
+  /** Frontend keys marked with `ignore()`; never filled from undeclared backend fields. */
+  readonly ignoredKeys: ReadonlySet<string>;
+  /** Per-mapping policy override, if any. */
+  readonly undeclared: UndeclaredFieldPolicy | undefined;
+  /** Per-mapping convention override, resolved once. */
+  readonly convention: NamingConvention | undefined;
+  /** Effective configuration per global configuration, computed lazily. */
+  readonly resolved: WeakMap<MapperConfig, MapperConfig>;
 }
 
 const registry = new WeakMap<Mapping<unknown, unknown>, CompiledMapping>();

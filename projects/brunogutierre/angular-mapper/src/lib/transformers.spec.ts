@@ -38,7 +38,7 @@ describe('isoDate', () => {
   it('serializes calendar dates with format: date', () => {
     const date = toFront(isoDate({ format: 'date' }), '2026-02-28');
 
-    expect(date).toEqual(new Date(Date.UTC(2026, 1, 28)));
+    expect(date).toEqual(new Date(2026, 1, 28));
     expect(toBack(isoDate({ format: 'date' }), date)).toBe('2026-02-28');
   });
 
@@ -184,7 +184,7 @@ describe('nested and listOf', () => {
     expect(person).toEqual({
       home: { zipCode: '01000' },
       others: [{ zipCode: '02000' }, null],
-      visits: [new Date(Date.UTC(2026, 0, 2))],
+      visits: [new Date(2026, 0, 2)],
     });
     expect(mapObject(personMapping, person, 'toBack', DEFAULT_MAPPER_CONFIG)).toEqual(dto);
   });

@@ -9,35 +9,68 @@ import type { Mapping, MappingContext, Transformer } from './types';
  */
 export interface IsoDateOptions {
   /**
-   * Shape of the string sent to the backend:
-   * - `datetime` (default): full ISO 8601 timestamp in UTC, e.g. `2026-10-01T13:45:00.000Z`.
-   * - `date`: calendar date only, e.g. `2026-10-01` (UTC), for `LocalDate`-style fields.
+   * - `datetime` (default): an instant. Reads any ISO 8601 date-time and sends the full UTC
+   *   timestamp, e.g. `2026-10-01T13:45:00.000Z`.
+   * - `date`: a calendar date such as `2026-10-01`, for `LocalDate`-style fields. It is read as
+   *   local midnight and sent from local date parts, so the day never shifts with the user's
+   *   timezone.
    */
   readonly format?: 'datetime' | 'date';
 }
 
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const ISO_DATE_TIME =
+  /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/i;
+
 /**
- * Converts ISO 8601 strings from the backend into `Date` objects and back.
+ * Converts ISO 8601 strings from the backend into `Date` objects and back. Strings that are not
+ * ISO 8601 (e.g. `"Oct 1"`) are rejected instead of being guessed.
  *
  * @usageNotes
  * ```ts
+ * createdAt: { from: 'created_at', transform: isoDate() },
  * birthDate: { from: 'birth_date', transform: isoDate({ format: 'date' }) },
  * ```
  *
  * @publicApi
  */
 export function isoDate(options: IsoDateOptions = {}): Transformer<string, Date> {
-  const dateOnly = options.format === 'date';
+  if (options.format === 'date') {
+    return {
+      toFront: (value) => parseLocalDate(value),
+      toBack: (value) => {
+        const date = validDate(value, value);
+        return [
+          String(date.getFullYear()).padStart(4, '0'),
+          String(date.getMonth() + 1).padStart(2, '0'),
+          String(date.getDate()).padStart(2, '0'),
+        ].join('-');
+      },
+    };
+  }
   return {
     toFront: (value) => {
       expectType(value, 'string');
+      if (!ISO_DATE_TIME.test(value)) throw new TypeError(`"${value}" is not an ISO 8601 date.`);
       return validDate(new Date(value), value);
     },
-    toBack: (value) => {
-      const iso = validDate(value, value).toISOString();
-      return dateOnly ? iso.slice(0, 10) : iso;
-    },
+    toBack: (value) => validDate(value, value).toISOString(),
   };
+}
+
+function parseLocalDate(value: unknown): Date {
+  expectType(value, 'string');
+  const match = ISO_DATE.exec(value as string);
+  if (!match)
+    throw new TypeError(`"${String(value)}" is not an ISO 8601 calendar date (YYYY-MM-DD).`);
+  const [year, month, day] = match.slice(1).map(Number) as [number, number, number];
+  const date = new Date(0);
+  date.setFullYear(year, month - 1, day); // setFullYear keeps years 0-99 literal
+  date.setHours(0, 0, 0, 0);
+  if (date.getMonth() !== month - 1 || date.getDate() !== day) {
+    throw new TypeError(`"${String(value)}" is not a valid calendar date.`);
+  }
+  return date;
 }
 
 /**
@@ -71,9 +104,11 @@ export function epochSeconds(): Transformer<number, Date> {
   };
 }
 
+const DECIMAL = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+
 /**
- * Converts numeric strings (e.g. decimals serialized as strings to keep precision) into
- * numbers and back.
+ * Converts decimal strings (e.g. decimals serialized as strings to keep precision) into
+ * numbers and back. Hexadecimal, `Infinity` and `NaN` are rejected in both directions.
  *
  * @publicApi
  */
@@ -81,8 +116,8 @@ export function numberString(): Transformer<string, number> {
   return {
     toFront: (value) => {
       expectType(value, 'string');
-      const parsed = value.trim() === '' ? Number.NaN : Number(value);
-      if (Number.isNaN(parsed)) throw new TypeError(`"${value}" is not a number.`);
+      const parsed = DECIMAL.test(value.trim()) ? Number(value) : Number.NaN;
+      if (!Number.isFinite(parsed)) throw new TypeError(`"${value}" is not a decimal number.`);
       return parsed;
     },
     toBack: (value) => {

@@ -50,7 +50,7 @@ describe('Mapper', () => {
       const mapper = setup();
       const user = mapper.toFront(userMapping, dto);
 
-      expect(user).toEqual({ id: 1, birthDate: new Date(Date.UTC(2000, 0, 31)), nick_name: 'ada' });
+      expect(user).toEqual({ id: 1, birthDate: new Date(2000, 0, 31), nick_name: 'ada' });
       expect(mapper.toBack(userMapping, user)).toEqual(dto);
     });
 
@@ -63,9 +63,7 @@ describe('Mapper', () => {
     });
 
     it('converts partial models for PATCH payloads', () => {
-      expect(
-        setup().toBackPartial(userMapping, { birthDate: new Date(Date.UTC(2001, 1, 2)) }),
-      ).toEqual({
+      expect(setup().toBackPartial(userMapping, { birthDate: new Date(2001, 1, 2) })).toEqual({
         birth_date: '2001-02-02',
       });
     });

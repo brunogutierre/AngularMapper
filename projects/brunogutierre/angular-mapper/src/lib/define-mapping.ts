@@ -1,7 +1,14 @@
 import { registerCompiled, type CompiledField } from './compiled-mapping';
 import { MapperError } from './errors';
 import { resolveNamingConvention } from './naming';
-import type { IgnoredField, Mapping, MappingOptions, MappingSpec, Transformer } from './types';
+import type {
+  IgnoredField,
+  Mapping,
+  MappingOptions,
+  MappingSpec,
+  NamingConvention,
+  Transformer,
+} from './types';
 
 const IGNORED: IgnoredField = Object.freeze({ ignore: true });
 
@@ -57,12 +64,16 @@ export function defineMapping<B extends object, F extends object>(
   const fields: CompiledField[] = [];
   const frontKeys = new Set<string>();
   const backKeys = new Set<string>();
+  const ignoredKeys = new Set<string>();
   const sentBack = new Map<string, string>();
 
   for (const [front, entry] of Object.entries(spec as Record<string, unknown>)) {
     if (entry === undefined) continue;
     frontKeys.add(front);
-    if (isIgnored(entry)) continue;
+    if (isIgnored(entry)) {
+      ignoredKeys.add(front);
+      continue;
+    }
 
     const field = compileField(name, front, entry);
     fields.push(field);
@@ -83,7 +94,18 @@ export function defineMapping<B extends object, F extends object>(
   }
 
   const mapping: Mapping<B, F> = Object.freeze({ name, options: Object.freeze({ ...options }) });
-  registerCompiled(mapping, Object.freeze({ fields: Object.freeze(fields), frontKeys, backKeys }));
+  registerCompiled(
+    mapping,
+    Object.freeze({
+      fields: Object.freeze(fields),
+      frontKeys,
+      backKeys,
+      ignoredKeys,
+      undeclared: options.undeclared,
+      convention: resolveConvention(name, options),
+      resolved: new WeakMap(),
+    }),
+  );
   return mapping;
 }
 
@@ -97,20 +119,23 @@ function validateOptions(mapping: string, options: MappingOptions): void {
       { mapping },
     );
   }
-  if (options.convention !== undefined) {
-    try {
-      resolveNamingConvention(options.convention);
-    } catch (error) {
-      throw new MapperError('MAPPER_INVALID_MAPPING', (error as Error).message, {
-        mapping,
-        cause: error,
-      });
-    }
+}
+
+function resolveConvention(mapping: string, options: MappingOptions): NamingConvention | undefined {
+  if (options.convention === undefined) return undefined;
+  try {
+    return resolveNamingConvention(options.convention);
+  } catch (error) {
+    throw new MapperError('MAPPER_INVALID_MAPPING', (error as Error).message, {
+      mapping,
+      cause: error,
+    });
   }
 }
 
 function compileField(mapping: string, front: string, entry: unknown): CompiledField {
   if (typeof entry === 'string') {
+    if (entry === '') throw invalid(mapping, front, 'the backend key must not be empty');
     return { front, back: entry, transform: undefined, only: undefined };
   }
   if (typeof entry !== 'object' || entry === null) {
