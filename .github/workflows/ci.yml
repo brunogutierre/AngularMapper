@@ -36,14 +36,14 @@ jobs:
       - name: Type tests
         run: npm run test:types
 
-      - name: Unit tests
-        run: npm test
+      - name: Unit tests with coverage
+        run: npm run test:coverage
 
       - name: Demo tests
         run: npm run test:demo
 
-      - name: Build library
-        run: npm run build
+      - name: Build and check package (publint, attw, npm pack)
+        run: npm run check:package
 
       - name: Build demo
         run: npm run build:demo
