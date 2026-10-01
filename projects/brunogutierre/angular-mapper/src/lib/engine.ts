@@ -1,6 +1,5 @@
-import { getCompiled } from './compiled-mapping';
+import { getCompiled, type CompiledMapping } from './compiled-mapping';
 import { MapperError } from './errors';
-import { resolveNamingConvention } from './naming';
 import type {
   MapperConfig,
   Mapping,
@@ -39,23 +38,31 @@ export function mapObject(
     });
   }
 
-  const { undeclared, convention } = resolveConfig(mapping, config);
+  const { undeclared, convention } = resolveConfig(compiled, config);
   const consumed = direction === 'toFront' ? compiled.backKeys : compiled.frontKeys;
   const output: PlainObject = {};
+  const context: UndeclaredContext = { undeclared, convention, direction, mapping, path };
 
   // Undeclared fields go first so that declared fields win any key collision.
   for (const [key, value] of Object.entries(input)) {
     if (consumed.has(key) || value === undefined) continue;
-    copyUndeclared(output, key, value, { undeclared, convention, direction, mapping, path });
+    copyUndeclared(output, key, value, context);
+  }
+  // Frontend-only fields are never filled from the backend, whatever the policy.
+  if (direction === 'toFront') {
+    for (const key of compiled.ignoredKeys) Reflect.deleteProperty(output, key);
   }
 
   for (const field of compiled.fields) {
     if (field.only !== undefined && field.only !== direction) continue;
     const [source, target] =
       direction === 'toFront' ? [field.back, field.front] : [field.front, field.back];
+    // Read through getters of class instances, but never inherit Object.prototype members
+    // (a backend key named "constructor" must not resolve to Object).
+    if (!Object.hasOwn(input, source) && source in Object.prototype) continue;
     const value: unknown = Reflect.get(input, source);
     if (value === undefined) continue;
-    const context: MappingContext = {
+    const fieldContext: MappingContext = {
       mapping: mapping.name,
       path: join(path, field.front),
       direction,
@@ -64,7 +71,7 @@ export function mapObject(
     const mapped =
       value === null || field.transform === undefined
         ? value
-        : applyTransformer(field.transform, value, context);
+        : applyTransformer(field.transform, value, fieldContext);
     setOwn(output, target, mapped);
   }
 
@@ -92,17 +99,26 @@ export function mapList(
   );
 }
 
-/** Effective configuration of a mapping: its own options over the global config. */
-export function resolveConfig(
-  mapping: Mapping<unknown, unknown>,
-  config: MapperConfig,
-): MapperConfig {
-  const { undeclared, convention } = mapping.options;
+/**
+ * Effective configuration of a mapping: its own options over the global config. A per-mapping
+ * convention implies the `convert` policy, like `withNamingConvention()`, unless the policy is
+ * set explicitly or the global config is strict. Memoized per global config.
+ */
+export function resolveConfig(compiled: CompiledMapping, config: MapperConfig): MapperConfig {
+  const { undeclared, convention } = compiled;
   if (undeclared === undefined && convention === undefined) return config;
-  return {
-    undeclared: undeclared ?? config.undeclared,
-    convention: convention === undefined ? config.convention : resolveNamingConvention(convention),
-  };
+
+  let resolved = compiled.resolved.get(config);
+  if (resolved === undefined) {
+    const implied =
+      convention !== undefined && config.undeclared !== 'error' ? 'convert' : config.undeclared;
+    resolved = Object.freeze({
+      undeclared: undeclared ?? implied,
+      convention: convention ?? config.convention,
+    });
+    compiled.resolved.set(config, resolved);
+  }
+  return resolved;
 }
 
 /** `true` for object literals, `JSON.parse` results and `Object.create(null)` objects. */
@@ -205,6 +221,9 @@ function join(path: string, key: string): string {
 function describe(value: unknown): string {
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'an array';
-  if (typeof value === 'object') return `an instance of ${value.constructor.name}`;
+  if (typeof value === 'object') {
+    const constructor = (value as { constructor?: { name?: string } }).constructor;
+    return `an instance of ${constructor?.name ?? 'Object'}`;
+  }
   return typeof value;
 }

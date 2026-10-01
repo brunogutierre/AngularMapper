@@ -135,20 +135,26 @@ example, it rejects two fields that write the same backend key.
 
 A `Transformer<B, F>` is an object with `toFront(value, context)` and `toBack(value, context)`.
 
-| Transformer                          | Backend ↔ Frontend                                  |
-| ------------------------------------ | --------------------------------------------------- |
-| `isoDate()`                          | ISO 8601 string ↔ `Date`, sent as a UTC timestamp   |
-| `isoDate({ format: 'date' })`        | `YYYY-MM-DD` ↔ `Date`, for `LocalDate`-style fields |
-| `epochMillis()` / `epochSeconds()`   | Unix time ↔ `Date`                                  |
-| `numberString()`                     | `"12.50"` ↔ `12.5`, for decimals sent as strings    |
-| `enumMap({ A: 'active' })`           | String codes ↔ any value                            |
-| `enumMap([[1, 'low'], [2, 'high']])` | Numeric codes ↔ any value                           |
-| `nested(mapping)`                    | Applies another mapping to a nested object          |
-| `listOf(transformer)`                | Applies a transformer to each array element         |
-| `custom({ toFront, toBack })`        | Your own conversion                                 |
+| Transformer                          | Backend ↔ Frontend                                               |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| `isoDate()`                          | ISO 8601 date-time ↔ `Date`, sent as a UTC timestamp             |
+| `isoDate({ format: 'date' })`        | `YYYY-MM-DD` ↔ `Date` at local midnight, so the day never shifts |
+| `epochMillis()` / `epochSeconds()`   | Unix time ↔ `Date`                                               |
+| `numberString()`                     | `"12.50"` ↔ `12.5`, finite decimals sent as strings              |
+| `enumMap({ A: 'active' })`           | String codes ↔ any value                                         |
+| `enumMap([[1, 'low'], [2, 'high']])` | Numeric codes ↔ any value                                        |
+| `nested(mapping)`                    | Applies another mapping to a nested object                       |
+| `listOf(transformer)`                | Applies a transformer to each array element                      |
+| `custom({ toFront, toBack })`        | Your own conversion                                              |
 
 Transformers compose. For example, `listOf(nested(addressMapping))` maps a list of addresses,
 and `listOf(isoDate())` maps a list of dates.
+
+Date transformers only accept ISO 8601 strings. Values such as `"Oct 1"` are rejected instead
+of being guessed.
+
+`nested(mapping)` applies the nested mapping's own options over the global configuration. A
+parent mapping's options are not inherited.
 
 When a transformer throws, the error is wrapped in a `MapperError` that carries the full path,
 such as `user › addresses[2].zipCode`.
@@ -174,8 +180,12 @@ provideMapper(withNamingConvention('snake_case'), withStrictMode());
   `HTTPStatus` becomes `http_status`.
 - **Strict mode wins** over the naming convention, in any order. It catches backend contract
   changes early.
-- **One mapping can override** the global settings:
-  `defineMapping(name, spec, { undeclared: 'drop', convention: 'PascalCase' })`.
+- **One mapping can override** the global settings. A convention on its own implies `convert`,
+  unless the app is in strict mode:
+  `defineMapping(name, spec, { convention: 'PascalCase' })`. Use `{ undeclared: 'drop' }` to
+  leave undeclared fields out of one mapping.
+- **`ignore()` fields stay frontend-only.** They are never sent, and never filled from a
+  backend field of the same name.
 
 `provideMapper()` belongs in the root providers. Calling it in a lazy route or a child injector
 throws `MAPPER_ALREADY_PROVIDED`, because the root singleton would otherwise ignore that
@@ -237,8 +247,8 @@ export class AppModule {}
 
 Every error is a `MapperError` with these properties:
 
-- `code`: one of `MAPPER_INVALID_MAPPING`, `MAPPER_INVALID_INPUT`, `MAPPER_UNKNOWN_FIELD`,
-  `MAPPER_TRANSFORM_FAILED` or `MAPPER_ALREADY_PROVIDED`.
+- `code`: one of `MAPPER_INVALID_MAPPING`, `MAPPER_INVALID_CONFIG`, `MAPPER_INVALID_INPUT`,
+  `MAPPER_UNKNOWN_FIELD`, `MAPPER_TRANSFORM_FAILED` or `MAPPER_ALREADY_PROVIDED`.
 - `mapping`: the name of the mapping that failed.
 - `path`: the location of the field, such as `addresses[1].zipCode`.
 - `cause`: the original error.

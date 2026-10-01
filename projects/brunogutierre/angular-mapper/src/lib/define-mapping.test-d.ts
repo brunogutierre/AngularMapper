@@ -42,8 +42,26 @@ expectTypeOf<FrontOf<typeof userMapping>>().toEqualTypeOf<User>();
 // Every field is optional: undeclared ones follow the undeclared-field policy.
 defineMapping<UserDto, User>('partial', { id: 'user_id' });
 
-// A plain rename accepts a key whose type differs only by nullability.
-defineMapping<{ name: string | null }, { name: string }>('nullable', { name: 'name' });
+// Both sides must agree on null, since the mapper copies null as-is.
+defineMapping<{ name: string | null }, { name: string | null }>('nullable', { name: 'name' });
+
+defineMapping<{ name: string | null }, { name: string }>('nullable backend', {
+  // @ts-expect-error the backend may send null but the frontend field is not nullable.
+  name: 'name',
+});
+
+defineMapping<{ name: string }, { name: string | null }>('nullable frontend', {
+  // @ts-expect-error the frontend may hold null but the backend field is not nullable.
+  name: 'name',
+});
+
+defineMapping<{ born: string | null }, { born: Date }>('nullable transformed', {
+  // @ts-expect-error a transformer never sees null, so the frontend would receive it as-is.
+  born: { from: 'born', transform: isoDate },
+});
+
+// Optional (undefined) fields are fine on either side: missing values are omitted.
+defineMapping<{ nick?: string }, { nick: string }>('optional', { nick: 'nick' });
 
 defineMapping<UserDto, User>('unknown backend key', {
   // @ts-expect-error 'userId' is not a key of UserDto.

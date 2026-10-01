@@ -7,7 +7,6 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { DEFAULT_MAPPER_CONFIG } from './config';
 import { defineMapping } from './define-mapping';
-import { MapperError } from './errors';
 import { MAPPER_CONFIG, Mapper } from './mapper';
 import { resolveNamingConvention } from './naming';
 import { provideMapper, withNamingConvention, withStrictMode } from './provide-mapper';
@@ -50,7 +49,7 @@ describe('Mapper', () => {
       const mapper = setup();
       const user = mapper.toFront(userMapping, dto);
 
-      expect(user).toEqual({ id: 1, birthDate: new Date(Date.UTC(2000, 0, 31)), nick_name: 'ada' });
+      expect(user).toEqual({ id: 1, birthDate: new Date(2000, 0, 31), nick_name: 'ada' });
       expect(mapper.toBack(userMapping, user)).toEqual(dto);
     });
 
@@ -63,9 +62,7 @@ describe('Mapper', () => {
     });
 
     it('converts partial models for PATCH payloads', () => {
-      expect(
-        setup().toBackPartial(userMapping, { birthDate: new Date(Date.UTC(2001, 1, 2)) }),
-      ).toEqual({
+      expect(setup().toBackPartial(userMapping, { birthDate: new Date(2001, 1, 2) })).toEqual({
         birth_date: '2001-02-02',
       });
     });
@@ -129,12 +126,19 @@ describe('Mapper', () => {
 
     it('rejects the same feature twice', () => {
       expect(() => provideMapper(withStrictMode(), withStrictMode())).toThrow(
-        'The StrictMode feature was passed to provideMapper() more than once.',
+        expect.objectContaining({
+          code: 'MAPPER_INVALID_CONFIG',
+          message: expect.stringContaining(
+            'The StrictMode feature was passed to provideMapper() more than once.',
+          ),
+        }),
       );
     });
 
     it('rejects an unknown naming convention eagerly', () => {
-      expect(() => withNamingConvention('snakecase' as 'snake_case')).toThrow(MapperError);
+      expect(() => withNamingConvention('snakecase' as 'snake_case')).toThrow(
+        expect.objectContaining({ code: 'MAPPER_INVALID_CONFIG' }),
+      );
     });
 
     it('works from the providers of a root NgModule', () => {

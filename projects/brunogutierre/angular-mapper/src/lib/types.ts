@@ -80,10 +80,24 @@ export interface Transformer<B, F> {
 /** Keys of `T` that are strings: the only ones that survive JSON. */
 type StringKeyOf<T> = Extract<keyof T, string>;
 
-/** `true` when `A` and `B` are mutually assignable, ignoring `null` and `undefined`. */
+/** `true` when `null` is part of `T`. */
+type AcceptsNull<T> = null extends T ? true : false;
+
+/**
+ * `true` when both sides agree on `null`: the mapper copies `null` as-is, so a nullable backend
+ * field cannot feed a non-nullable frontend field (or the reverse). `undefined` is not checked:
+ * missing values are omitted, never written.
+ */
+type SameNullability<A, B> = [AcceptsNull<A>] extends [AcceptsNull<B>]
+  ? [AcceptsNull<B>] extends [AcceptsNull<A>]
+    ? true
+    : false
+  : false;
+
+/** `true` when `A` and `B` are mutually assignable and agree on `null`. */
 type Compatible<A, B> = [NonNullable<A>] extends [NonNullable<B>]
   ? [NonNullable<B>] extends [NonNullable<A>]
-    ? true
+    ? SameNullability<A, B>
     : false
   : false;
 
@@ -129,7 +143,7 @@ export interface IgnoredField {
 /** Every valid object form for a frontend field whose value type is `FV`. */
 type FieldObject<B, FV> = {
   [BK in StringKeyOf<B>]-?:
-    | TransformedField<BK, B[BK], FV>
+    | (SameNullability<B[BK], FV> extends true ? TransformedField<BK, B[BK], FV> : never)
     | (Compatible<B[BK], FV> extends true ? RenamedField<BK> : never);
 }[StringKeyOf<B>];
 

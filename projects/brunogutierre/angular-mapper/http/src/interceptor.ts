@@ -30,7 +30,8 @@ const HTTP_MAPPINGS = new HttpContextToken<HttpMappings | null>(() => null);
  * Note that `HttpClient` cannot infer the response type from the context: keep passing the
  * frontend type as the generic, or prefer the `rxjs` operators for end-to-end inference.
  *
- * @param context Existing context to extend; a new one is created by default.
+ * @param context Existing context to extend. It is modified and returned as the same instance;
+ * a new one is created by default.
  *
  * @usageNotes
  * ```ts

@@ -19,3 +19,5 @@ All notable changes to `@brunogutierre/angular-mapper` are documented here. The 
   `mapToBackList`.
 - `@brunogutierre/angular-mapper/http`: `mapperInterceptor` and `withMapping()`.
 - `MapperError` with codes, mapping name, field path and cause.
+- Compile-time check that both sides of a field agree on `null`.
+- `isoDate({ format: 'date' })` reads and sends calendar dates in local time.
