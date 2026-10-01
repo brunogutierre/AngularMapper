@@ -23,4 +23,15 @@ export type {
   Transformer,
   UndeclaredFieldPolicy,
 } from './lib/types';
+export {
+  custom,
+  enumMap,
+  epochMillis,
+  epochSeconds,
+  isoDate,
+  listOf,
+  nested,
+  numberString,
+} from './lib/transformers';
+export type { IsoDateOptions } from './lib/transformers';
 export { VERSION } from './lib/version';

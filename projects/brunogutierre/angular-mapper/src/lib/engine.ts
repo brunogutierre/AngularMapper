@@ -1,4 +1,4 @@
-import { getCompiled, type CompiledField } from './compiled-mapping';
+import { getCompiled } from './compiled-mapping';
 import { MapperError } from './errors';
 import type {
   MapperConfig,
@@ -6,6 +6,7 @@ import type {
   MappingContext,
   MappingDirection,
   NamingConvention,
+  Transformer,
   UndeclaredFieldPolicy,
 } from './types';
 
@@ -59,7 +60,11 @@ export function mapObject(
       direction,
       config,
     };
-    setOwn(output, target, value === null ? null : transform(field, value, context));
+    const mapped =
+      value === null || field.transform === undefined
+        ? value
+        : applyTransformer(field.transform, value, context);
+    setOwn(output, target, mapped);
   }
 
   return output;
@@ -159,21 +164,27 @@ function convertKeys(value: unknown, context: UndeclaredContext): unknown {
   return output;
 }
 
-function transform(field: CompiledField, value: unknown, context: MappingContext): unknown {
-  if (field.transform === undefined) return value;
+/**
+ * Runs one direction of a transformer, wrapping any non-`MapperError` failure in a
+ * `MAPPER_TRANSFORM_FAILED` error located at `context.path`. Composite transformers call it for
+ * each inner value so failures keep their precise path (e.g. `visits[1]`).
+ */
+export function applyTransformer<B, F>(
+  transformer: Transformer<B, F>,
+  value: unknown,
+  context: MappingContext,
+): unknown {
   try {
-    return field.transform[context.direction](value, context);
+    return context.direction === 'toFront'
+      ? transformer.toFront(value as B, context)
+      : transformer.toBack(value as F, context);
   } catch (error) {
     if (error instanceof MapperError) throw error;
     const reason = error instanceof Error ? error.message : String(error);
     throw new MapperError(
       'MAPPER_TRANSFORM_FAILED',
       `Transformer failed (${context.direction}): ${reason}`,
-      {
-        mapping: context.mapping,
-        path: context.path,
-        cause: error,
-      },
+      { mapping: context.mapping, path: context.path, cause: error },
     );
   }
 }
